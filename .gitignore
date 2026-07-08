@@ -1,3 +1,11 @@
 /target/
 Cargo.lock
-/site/
+core/fuzz/target/
+core/fuzz/corpus/
+core/fuzz/artifacts/
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
