@@ -197,7 +197,44 @@ impl EncryptionContext {
     /// KEK-wrapped struct is absent; [`FileVaultError::Base64`] on a bad blob;
     /// [`FileVaultError::OutOfRange`] if a struct is too short.
     pub fn extract(metadata: &[u8]) -> Result<Self, FileVaultError> {
-        let _ = metadata; return Err(FileVaultError::MetadataStructureMissing { what: "RED" });
+        let pw = extract_data(metadata, "PassphraseWrappedKEKStruct").ok_or(
+            FileVaultError::MetadataStructureMissing {
+                what: "PassphraseWrappedKEKStruct",
+            },
+        )?;
+
+        let salt = slice16(&pw, PW_SALT_OFFSET).ok_or(FileVaultError::OutOfRange {
+            what: "PassphraseWrappedKEKStruct salt",
+        })?;
+        let wrapped_kek =
+            slice24(&pw, PW_WRAPPED_KEK_OFFSET).ok_or(FileVaultError::OutOfRange {
+                what: "PassphraseWrappedKEKStruct wrapped KEK",
+            })?;
+        let iterations =
+            read_u32_le(&pw, PW_ITERATIONS_OFFSET).ok_or(FileVaultError::OutOfRange {
+                what: "PassphraseWrappedKEKStruct iterations",
+            })?;
+
+        // The AES-XTS KEKWrappedVolumeKeyStruct is the one that wraps the real
+        // volume key; the `BlockAlgorithm == None` sibling is a placeholder.
+        let vmk_struct = extract_kek_wrapped_aes_xts(metadata).ok_or(
+            FileVaultError::MetadataStructureMissing {
+                what: "AES-XTS KEKWrappedVolumeKeyStruct",
+            },
+        )?;
+        let wrapped_vmk =
+            slice24(&vmk_struct, KEK_WRAPPED_VMK_OFFSET).ok_or(FileVaultError::OutOfRange {
+                what: "KEKWrappedVolumeKeyStruct wrapped VMK",
+            })?;
+
+        Ok(EncryptionContext {
+            salt,
+            iterations,
+            wrapped_kek,
+            wrapped_vmk,
+            protectors: extract_protectors(metadata),
+            conversion_status: extract_string(metadata, "ConversionStatus"),
+        })
     }
 }
 

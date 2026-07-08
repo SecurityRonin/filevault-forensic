@@ -67,8 +67,19 @@ pub fn derive_volume_keys(
     context: &EncryptionContext,
     family_uuid_bytes: &[u8; 16],
 ) -> Result<VolumeKeys, FileVaultError> {
-        let _ = (password, context, family_uuid_bytes); return Err(FileVaultError::KeyUnwrap { what: "RED" });
-    }
+    let pk = passphrase_key(password, &context.salt, context.iterations);
+    let kek = aes_kw_unwrap(&pk, &context.wrapped_kek, "KEK")?;
+    let vmk = aes_kw_unwrap(&kek, &context.wrapped_vmk, "VMK")?;
+
+    let mut hasher = Sha256::new();
+    hasher.update(vmk);
+    hasher.update(family_uuid_bytes);
+    let digest = hasher.finalize();
+    let mut tweak_key = [0u8; 16];
+    tweak_key.copy_from_slice(&digest[..16]);
+
+    Ok(VolumeKeys { vmk, tweak_key })
+}
 
 #[cfg(test)]
 mod tests {

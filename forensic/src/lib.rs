@@ -201,7 +201,27 @@ impl Observation for Anomaly {
 /// Classify the parsed [`FileVaultInfo`] into anomalies (no password needed).
 #[must_use]
 pub fn audit_info(info: &FileVaultInfo) -> Vec<Anomaly> {
-    let _ = info; Vec::new()
+    let mut out = Vec::new();
+
+    let summary = protector_summary(info);
+    out.push(Anomaly::new(AnomalyKind::ProtectorInventory {
+        summary,
+        count: info.protectors.len(),
+    }));
+
+    if let Some(status) = &info.conversion_status {
+        out.push(Anomaly::new(AnomalyKind::EncryptionState {
+            status: status.clone(),
+        }));
+    }
+
+    if info.pbkdf2_iterations < WEAK_KDF_THRESHOLD {
+        out.push(Anomaly::new(AnomalyKind::WeakKdfIterations {
+            iterations: info.pbkdf2_iterations,
+        }));
+    }
+
+    out
 }
 
 /// A stable, human-readable summary of the protector kinds present.

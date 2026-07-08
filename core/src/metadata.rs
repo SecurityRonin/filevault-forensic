@@ -111,8 +111,55 @@ pub fn locate_encrypted_metadata(
     header: &VolumeHeader,
     region: &[u8],
 ) -> Result<EncryptedMetadataLocation, FileVaultError> {
-        let _ = (header, region); return Err(FileVaultError::OutOfRange { what: "RED" });
+    let block_type = le_u16(region, BLOCK_HEADER_TYPE_OFFSET);
+    if block_type != BLOCK_TYPE_ENCRYPTED_METADATA_POINTER {
+        return Err(FileVaultError::MetadataStructureMissing {
+            what: "0x0011 encrypted-metadata pointer block",
+        });
     }
+
+    let descriptor_offset =
+        le_u32(region, BLOCK_HEADER_SIZE + PAYLOAD_VG_DESCRIPTOR_OFFSET) as usize;
+
+    // The descriptor must sit within the region with room for its fields.
+    if descriptor_offset
+        .checked_add(VG_PRIMARY_BLOCK_OFFSET + 8)
+        .map_or(true, |end| end > region.len())
+    {
+        return Err(FileVaultError::MetadataStructureMissing {
+            what: "volume-groups descriptor (offset out of region)",
+        });
+    }
+
+    let block_count = le_u64(region, descriptor_offset + VG_COUNT_OFFSET);
+    let primary_block =
+        le_u64(region, descriptor_offset + VG_PRIMARY_BLOCK_OFFSET) & BLOCK_NUMBER_MASK;
+
+    if block_count == 0 || block_count > MAX_ENCRYPTED_METADATA_BLOCKS {
+        return Err(FileVaultError::OutOfRange {
+            what: "encrypted-metadata block count",
+        });
+    }
+
+    let block_size = u64::from(header.block_size);
+    let primary_offset =
+        primary_block
+            .checked_mul(block_size)
+            .ok_or(FileVaultError::OutOfRange {
+                what: "encrypted-metadata primary offset",
+            })?;
+    let length = block_count
+        .checked_mul(block_size)
+        .ok_or(FileVaultError::OutOfRange {
+            what: "encrypted-metadata length",
+        })?;
+
+    Ok(EncryptedMetadataLocation {
+        primary_offset,
+        block_count,
+        length,
+    })
+}
 
 /// Decrypt an encrypted-metadata region in place over 8192-byte AES-XTS-128
 /// units, tweak = 0-based unit index. Only whole units are decrypted; a trailing

@@ -55,7 +55,52 @@ impl<R: Read + Seek> DecryptedVolume<R> {
     /// # Errors
     /// [`FileVaultError::Io`] if the underlying read/seek fails.
     pub fn read_at(&mut self, offset: u64, buf: &mut [u8]) -> Result<usize, FileVaultError> {
-        let _ = (offset, buf); return Err(FileVaultError::OutOfRange { what: "RED" });
+        if offset >= self.size || buf.is_empty() {
+            return Ok(0);
+        }
+        let available = self.size - offset;
+        let want = (buf.len() as u64).min(available) as usize;
+
+        let first_sector = offset / SECTOR_SIZE as u64;
+        let end = offset + want as u64;
+        let last_sector = (end - 1) / SECTOR_SIZE as u64;
+        let sector_count = (last_sector - first_sector + 1) as usize;
+
+        let region_len =
+            sector_count
+                .checked_mul(SECTOR_SIZE)
+                .ok_or(FileVaultError::OutOfRange {
+                    what: "read region length",
+                })?;
+        let mut region = vec![0u8; region_len];
+
+        let physical = self.physical_base + first_sector * SECTOR_SIZE as u64;
+        self.reader.seek(SeekFrom::Start(physical))?;
+        // A short read (past end of the backing image) leaves the tail zeroed;
+        // decryption of zero ciphertext yields defined-but-meaningless bytes,
+        // never a panic. We still surface the bytes we could read.
+        read_full_or_eof(&mut self.reader, &mut region)?;
+
+        xts::decrypt_units(
+            &mut region,
+            &self.keys.vmk,
+            &self.keys.tweak_key,
+            SECTOR_SIZE,
+            u128::from(first_sector),
+        );
+
+        let inner = (offset - first_sector * SECTOR_SIZE as u64) as usize;
+        let slice = region
+            .get(inner..inner + want)
+            .ok_or(FileVaultError::OutOfRange {
+                what: "decrypted window",
+            })?;
+        buf.get_mut(..want)
+            .ok_or(FileVaultError::OutOfRange {
+                what: "output buffer window",
+            })?
+            .copy_from_slice(slice);
+        Ok(want)
     }
 }
 

@@ -43,7 +43,31 @@ impl VolumeHeader {
     /// - [`FileVaultError::NotCoreStorage`] if the `"CS"` signature is absent.
     /// - [`FileVaultError::UnsupportedEncryptionMethod`] if not AES-XTS-128.
     pub fn parse(data: &[u8]) -> Result<Self, FileVaultError> {
-        let _ = data; return Err(FileVaultError::OutOfRange { what: "RED" });
+        let signature = le_u16(data, 88);
+        if signature != CS_SIGNATURE_LE {
+            return Err(FileVaultError::NotCoreStorage { found: signature });
+        }
+
+        let encryption_method = le_u32(data, 172);
+        if encryption_method != ENCRYPTION_METHOD_AES_XTS_128 {
+            return Err(FileVaultError::UnsupportedEncryptionMethod {
+                found: encryption_method,
+            });
+        }
+
+        let mut metadata_block_numbers = [0u64; METADATA_BLOCK_SLOTS];
+        for (i, slot) in metadata_block_numbers.iter_mut().enumerate() {
+            *slot = le_u64(data, 104 + i * 8);
+        }
+
+        Ok(VolumeHeader {
+            block_size: le_u32(data, 96),
+            bytes_per_sector: le_u32(data, 48),
+            physical_volume_size: le_u64(data, 64),
+            metadata_block_numbers,
+            key_data: bytes16(data, 176),
+            physical_volume_identifier: bytes16(data, 304),
+        })
     }
 }
 
