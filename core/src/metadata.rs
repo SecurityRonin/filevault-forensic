@@ -56,7 +56,7 @@ pub struct EncryptedMetadataLocation {
     pub length: u64,
 }
 
-/// Byte offset and length of the plaintext metadata region (block mbn[0]).
+/// Byte offset and length of the plaintext metadata region (block `mbn[0]`).
 #[must_use]
 pub fn plaintext_metadata_region(header: &VolumeHeader) -> (u64, u64) {
     let block = header.metadata_block_numbers.first().copied().unwrap_or(0);
