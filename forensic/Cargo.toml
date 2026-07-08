@@ -1,0 +1,19 @@
+[package]
+name         = "filevault-forensic"
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+license.workspace      = true
+authors.workspace      = true
+repository.workspace   = true
+description  = "Anomaly auditor over filevault-core — CoreStorage/FileVault protector, encryption-state and weak-KDF findings via forensicnomicon::report"
+keywords     = ["forensics", "filevault", "corestorage", "macos", "dfir"]
+categories   = ["parser-implementations"]
+readme       = "../README.md"
+
+[dependencies]
+filevault = { workspace = true }
+forensicnomicon = { workspace = true }
+
+[lints]
+workspace = true
