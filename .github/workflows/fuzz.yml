@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [fuzz_catalog, fuzz_store, fuzz_reconstruct]
+        target: [fuzz_metadata]
     defaults:
       run:
         working-directory: core
