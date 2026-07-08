@@ -15,5 +15,13 @@ readme       = "../README.md"
 filevault = { workspace = true }
 forensicnomicon = { workspace = true }
 
+[dev-dependencies]
+# Build a synthetic CoreStorage image (XTS-encrypted metadata) to exercise the
+# reader-based analyzer entry points WITHOUT the env-gated oracle, so the
+# --workspace coverage gate is met in CI. Mirrors filevault-core's metadata XTS.
+base64 = "0.22"
+aes = "0.8"
+xts-mode = "0.5"
+
 [lints]
 workspace = true
