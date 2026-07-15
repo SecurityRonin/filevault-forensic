@@ -6,7 +6,16 @@
 //! normal filesystem mounts unchanged. The decryption is filevault-core's own
 //! (audited RustCrypto AES-XTS); this module only wires the contract.
 
-use forensic_vfs::{CredentialSource, CryptoLayer, CryptoScheme, DynSource, VfsError, VfsResult};
+use std::io::{Read, Seek};
+use std::sync::{Arc, Mutex, PoisonError};
+
+use forensic_vfs::adapters::SourceCursor;
+use forensic_vfs::{
+    Credential, CredentialSource, CryptoLayer, CryptoScheme, DynSource, ImageSource, VfsError,
+    VfsResult,
+};
+
+use crate::{FileVaultError, FileVaultVolume};
 
 /// A FileVault-encrypted logical volume presented as a [`CryptoLayer`].
 pub struct FileVaultLayer {
@@ -27,12 +36,81 @@ impl CryptoLayer for FileVaultLayer {
         CryptoScheme::FileVault
     }
 
-    fn open(&self, _creds: &dyn CredentialSource) -> VfsResult<DynSource> {
-        // RED: decryption not wired yet.
-        Err(VfsError::NeedCredentials {
-            scheme: "filevault",
-            target: String::new(),
-        })
+    fn open(&self, creds: &dyn CredentialSource) -> VfsResult<DynSource> {
+        let cands = creds.credentials_for(CryptoScheme::FileVault, "");
+        if cands.is_empty() {
+            return Err(VfsError::NeedCredentials {
+                scheme: "filevault",
+                target: String::new(),
+            });
+        }
+        // FileVault is unlocked by a volume password; try each offered one over a
+        // fresh Read+Seek view of the ciphertext (unlock consumes the reader).
+        let mut last_err = None;
+        for cred in &cands {
+            let Credential::Password(p) = cred else {
+                continue; // only a password protector is wired here
+            };
+            let cursor = SourceCursor::new(Arc::clone(&self.encrypted), 0, self.len);
+            match FileVaultVolume::unlock_with_password(cursor, p) {
+                Ok(vol) => return Ok(Arc::new(FileVaultSource::new(vol))),
+                Err(e) => last_err = Some(e),
+            }
+        }
+        Err(last_err.as_ref().map_or(
+            VfsError::NeedCredentials {
+                scheme: "filevault",
+                target: String::new(),
+            },
+            map_fvde_err,
+        ))
+    }
+}
+
+/// Translate a filevault-core error into the VFS error type (a bad password / bad
+/// header is a loud [`VfsError::Decode`]).
+fn map_fvde_err(e: &FileVaultError) -> VfsError {
+    VfsError::Decode {
+        layer: "filevault",
+        offset: 0,
+        detail: e.to_string(),
+        bytes: forensic_vfs::SmallHex::new(&[]),
+    }
+}
+
+/// A decrypted FileVault volume presented as a read-only [`ImageSource`]. Reads
+/// serialize through a poison-recovering `Mutex` (the reader advances a cursor).
+struct FileVaultSource<R: Read + Seek> {
+    inner: Mutex<FileVaultVolume<R>>,
+    len: u64,
+}
+
+impl<R: Read + Seek> FileVaultSource<R> {
+    fn new(vol: FileVaultVolume<R>) -> Self {
+        let len = vol.size();
+        Self {
+            inner: Mutex::new(vol),
+            len,
+        }
+    }
+}
+
+impl<R: Read + Seek + Send> ImageSource for FileVaultSource<R> {
+    fn len(&self) -> u64 {
+        self.len
+    }
+
+    fn read_at(&self, offset: u64, buf: &mut [u8]) -> VfsResult<usize> {
+        let avail = self.len.saturating_sub(offset);
+        if avail == 0 {
+            return Ok(0);
+        }
+        let want = (buf.len() as u64).min(avail) as usize;
+        let Some(dst) = buf.get_mut(..want) else {
+            return Ok(0); // cov:unreachable: want <= buf.len() by the min above
+        };
+        let mut guard = self.inner.lock().unwrap_or_else(PoisonError::into_inner);
+        guard.read_at(offset, dst).map_err(|e| map_fvde_err(&e))
     }
 }
 
@@ -63,10 +141,11 @@ mod tests {
     }
 
     fn sha256_hex(data: &[u8]) -> String {
-        Sha256::digest(data)
-            .iter()
-            .map(|b| format!("{b:02x}"))
-            .collect()
+        use std::fmt::Write;
+        Sha256::digest(data).iter().fold(String::new(), |mut s, b| {
+            let _ = write!(s, "{b:02x}");
+            s
+        })
     }
 
     #[test]
