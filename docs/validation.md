@@ -30,6 +30,27 @@ Offset 1024 decrypts to the HFS+ volume header (`482b0004…4846534a` = "H+" v4
 FVDE_ORACLE_IMAGE=/path/to/cs.raw cargo test -p filevault-core --test oracle_fvde
 ```
 
+## `vfs` CryptoLayer adapter (`core/src/vfs.rs`)
+
+The optional `vfs` feature exposes a `forensic-vfs` `CryptoLayer`
+(`FileVaultLayer`) that presents the decrypted logical volume as a `DynSource`.
+It is validated two ways:
+
+- **Tier-1**, against the same oracle: `filevault_cryptolayer_decrypts_fvdetest`
+  unlocks the real `fvdetest` volume through the adapter and asserts the
+  decrypted sector at LV offset 1024 matches the pyfvde-derived SHA-256
+  (`ebedb804…008990af`). Run with the oracle + `--all-features`:
+
+  ```
+  FVDE_ORACLE_IMAGE=/path/to/cs.raw \
+    cargo test -p filevault-core --all-features --lib vfs
+  ```
+
+- **Always-on (hermetic)**: synthetic-image tests drive every adapter branch
+  (open success, wrong-password → `VfsError::Decode`, non-password credential →
+  skipped → `NeedCredentials`, empty credentials, `read_at` EOF/clamp) without
+  the oracle, so the coverage gate holds even when the image is absent.
+
 ## Independent cross-check (Doer-Checker)
 
 Beyond the committed test offsets, the decryptor was compared against a *fresh*

@@ -32,6 +32,15 @@ export FVDE_ORACLE_IMAGE=/tmp/fvde-oracle/fvde_cs_p1.raw
 Per the fleet Test-Data Provenance Standard, extract working copies to `/tmp`,
 never under `~/src`.
 
+### Tests that consume it
+
+- Reader Tier-1: `cargo test -p filevault-core --test oracle_fvde`
+- Analyzer Tier-1: `cargo test -p filevault-forensic --test oracle`
+- `vfs` CryptoLayer adapter Tier-1 (needs `--all-features`):
+  `cargo test -p filevault-core --all-features --lib vfs`
+
+All skip cleanly when `FVDE_ORACLE_IMAGE` is unset.
+
 ### Trap avoided
 
 dfvfs also ships `cs_single_volume.raw`, which is an **unencrypted** CoreStorage
