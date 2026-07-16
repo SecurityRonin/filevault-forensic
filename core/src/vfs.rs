@@ -118,7 +118,9 @@ impl<R: Read + Seek + Send> ImageSource for FileVaultSource<R> {
 mod tests {
     use super::FileVaultLayer;
     use forensic_vfs::adapters::FileSource;
-    use forensic_vfs::{Credential, CredentialSource, CryptoLayer, CryptoScheme, DynSource};
+    use forensic_vfs::{
+        Credential, CredentialSource, CryptoLayer, CryptoScheme, DynSource, VfsError,
+    };
     use sha2::{Digest, Sha256};
     use std::sync::Arc;
 
@@ -151,7 +153,9 @@ mod tests {
     #[test]
     fn filevault_cryptolayer_decrypts_fvdetest() {
         let Some(enc) = encrypted() else {
+            // cov:unreachable: CI provides the oracle (ci.yml fetches + carves it)
             eprintln!("skip: no FileVault image (set FVDE_ORACLE_IMAGE)");
+            // cov:unreachable: CI provides the oracle (ci.yml fetches + carves it)
             return;
         };
         let layer = FileVaultLayer::new(enc);
@@ -172,5 +176,92 @@ mod tests {
 
         // No credentials offered → NeedCredentials, never a guess or panic.
         assert!(layer.open(&FixedCreds(vec![])).is_err());
+    }
+
+    // ---- Always-on synthetic tests (no oracle needed) --------------------
+    // Drive every adapter branch over a hermetic synthetic CoreStorage image so
+    // coverage holds even when the env-gated Tier-1 oracle is absent. Tier-3
+    // scaffolding under the Tier-1 oracle above (the oracle proves correctness
+    // against real data; these specify the wiring).
+
+    use crate::test_support::{build_image, PASSWORD};
+    use forensic_vfs::adapters::SeekPoolSource;
+    use std::io::Cursor;
+
+    /// A synthetic CoreStorage image (unlockable by [`PASSWORD`]) as a `DynSource`.
+    fn synthetic_source() -> DynSource {
+        let image = build_image();
+        let len = image.len() as u64;
+        Arc::new(SeekPoolSource::single(Cursor::new(image), len))
+    }
+
+    #[test]
+    fn synthetic_open_decrypts_and_reads() {
+        let layer = FileVaultLayer::new(synthetic_source());
+        assert_eq!(layer.scheme(), CryptoScheme::FileVault);
+
+        let creds = FixedCreds(vec![Credential::Password(PASSWORD.to_string())]);
+        let dec: DynSource = layer.open(&creds).expect("unlock synthetic");
+        assert_eq!(dec.len(), 0x4000);
+
+        // Decrypted LV offset 0 is the byte ramp (0,1,2,…) built by the fixture.
+        let mut buf = [0u8; 512];
+        assert_eq!(dec.read_at(0, &mut buf).expect("read decrypted"), 512);
+        let expected: Vec<u8> = (0..512).map(|i| (i & 0xff) as u8).collect();
+        assert_eq!(&buf[..], &expected[..]);
+
+        // A read starting at EOF yields 0 bytes (avail == 0), never a panic.
+        assert_eq!(dec.read_at(0x4000, &mut buf).expect("eof read"), 0);
+        // A read past EOF likewise.
+        assert_eq!(dec.read_at(0x9000, &mut buf).expect("past-eof read"), 0);
+        // A read clamped to the tail returns only the available bytes.
+        let mut tail = [0u8; 512];
+        let n = dec.read_at(0x4000 - 100, &mut tail).expect("clamped read");
+        assert_eq!(n, 100);
+    }
+
+    #[test]
+    fn synthetic_wrong_password_is_decode_error() {
+        let layer = FileVaultLayer::new(synthetic_source());
+        let creds = FixedCreds(vec![Credential::Password("wrong".to_string())]);
+        // A wrong password surfaces the last unlock error as a loud Decode, not
+        // a silent empty result or a panic.
+        let err = layer.open(&creds).err().expect("wrong password must fail");
+        assert!(matches!(
+            err,
+            VfsError::Decode {
+                layer: "filevault",
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn non_password_credential_is_skipped_then_needs_credentials() {
+        let layer = FileVaultLayer::new(synthetic_source());
+        // Only a non-password credential offered: the password-only branch is
+        // skipped (`continue`), leaving no unlock attempt → NeedCredentials.
+        let creds = FixedCreds(vec![Credential::KeyBytes(vec![0u8; 16])]);
+        let err = layer.open(&creds).err().expect("no usable credential");
+        assert!(matches!(
+            err,
+            VfsError::NeedCredentials {
+                scheme: "filevault",
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn empty_credentials_needs_credentials() {
+        let layer = FileVaultLayer::new(synthetic_source());
+        let err = layer.open(&FixedCreds(vec![])).err().expect("empty creds");
+        assert!(matches!(
+            err,
+            VfsError::NeedCredentials {
+                scheme: "filevault",
+                ..
+            }
+        ));
     }
 }
