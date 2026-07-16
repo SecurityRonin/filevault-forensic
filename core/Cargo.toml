@@ -15,9 +15,18 @@ exclude      = ["/fuzz", "/.github", "/docs"]
 [lib]
 name = "filevault"
 
+[features]
+default = []
+# forensic-vfs CryptoLayer contract (optional): present a FileVault/CoreStorage
+# volume as a decrypted ImageSource. Behind the `vfs` feature (ADR 0004). The
+# decryption is filevault-core's own audited RustCrypto (AES-XTS); this only
+# wires the contract.
+vfs = ["dep:forensic-vfs"]
+
 [dependencies]
 thiserror = { workspace = true }
 uuid = { workspace = true }
+forensic-vfs = { version = "0.1", optional = true }
 # RustCrypto — never hand-roll a primitive (CLAUDE.core "never hand-roll crypto").
 pbkdf2 = { version = "0.12", default-features = false }
 hmac = "0.12"
