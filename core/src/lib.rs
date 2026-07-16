@@ -33,10 +33,10 @@ pub mod error;
 pub mod metadata;
 pub mod read;
 pub mod unlock;
-pub mod volume;
-pub mod volume_header;
 #[cfg(feature = "vfs")]
 pub mod vfs;
+pub mod volume;
+pub mod volume_header;
 pub mod xts;
 
 pub use context::{EncryptionContext, LogicalVolumeInfo, Protector, ProtectorKind};
