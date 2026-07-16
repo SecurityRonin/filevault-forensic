@@ -153,10 +153,8 @@ mod tests {
     #[test]
     fn filevault_cryptolayer_decrypts_fvdetest() {
         let Some(enc) = encrypted() else {
-            // cov:unreachable: CI provides the oracle (ci.yml fetches + carves it)
-            eprintln!("skip: no FileVault image (set FVDE_ORACLE_IMAGE)");
-            // cov:unreachable: CI provides the oracle (ci.yml fetches + carves it)
-            return;
+            eprintln!("skip: no FileVault image (set FVDE_ORACLE_IMAGE)"); // cov:unreachable: CI provides the oracle (ci.yml fetches + carves it)
+            return; // cov:unreachable: CI provides the oracle (ci.yml fetches + carves it)
         };
         let layer = FileVaultLayer::new(enc);
         assert_eq!(layer.scheme(), CryptoScheme::FileVault);
