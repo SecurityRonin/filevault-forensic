@@ -17,7 +17,7 @@ name = "filevault"
 
 [features]
 default = []
-# forensic-vfs CryptoLayer contract (optional): present a FileVault/CoreStorage
+# forensic-vfs EncryptionLayer contract (optional): present a FileVault/CoreStorage
 # volume as a decrypted ImageSource. Behind the `vfs` feature (ADR 0004). The
 # decryption is filevault-core's own audited RustCrypto (AES-XTS); this only
 # wires the contract.

@@ -37,6 +37,8 @@ mod test_support;
 pub mod unlock;
 #[cfg(feature = "vfs")]
 pub mod vfs;
+#[cfg(feature = "vfs")]
+pub use vfs::FileVaultLayer;
 pub mod volume;
 pub mod volume_header;
 pub mod xts;

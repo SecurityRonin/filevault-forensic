@@ -1,4 +1,4 @@
-//! `forensic-vfs` [`CryptoLayer`] adapter for FileVault / CoreStorage, behind the
+//! `forensic-vfs` [`EncryptionLayer`] adapter for FileVault / CoreStorage, behind the
 //! `vfs` feature.
 //!
 //! Wraps an encrypted FileVault logical volume (a parent [`ImageSource`]) and,
@@ -11,13 +11,13 @@ use std::sync::{Arc, Mutex, PoisonError};
 
 use forensic_vfs::adapters::SourceCursor;
 use forensic_vfs::{
-    Credential, CredentialSource, CryptoLayer, CryptoScheme, DynSource, ImageSource, VfsError,
-    VfsResult,
+    Credential, CredentialSource, DynSource, EncryptionLayer, EncryptionScheme, ImageSource,
+    VfsError, VfsResult,
 };
 
 use crate::{FileVaultError, FileVaultVolume};
 
-/// A FileVault-encrypted logical volume presented as a [`CryptoLayer`].
+/// A FileVault-encrypted logical volume presented as a [`EncryptionLayer`].
 pub struct FileVaultLayer {
     encrypted: DynSource,
     len: u64,
@@ -31,13 +31,13 @@ impl FileVaultLayer {
     }
 }
 
-impl CryptoLayer for FileVaultLayer {
-    fn scheme(&self) -> CryptoScheme {
-        CryptoScheme::FileVault
+impl EncryptionLayer for FileVaultLayer {
+    fn scheme(&self) -> EncryptionScheme {
+        EncryptionScheme::FileVault
     }
 
     fn open(&self, creds: &dyn CredentialSource) -> VfsResult<DynSource> {
-        let cands = creds.credentials_for(CryptoScheme::FileVault, "");
+        let cands = creds.credentials_for(EncryptionScheme::FileVault, "");
         if cands.is_empty() {
             return Err(VfsError::NeedCredentials {
                 scheme: "filevault",
@@ -119,14 +119,14 @@ mod tests {
     use super::FileVaultLayer;
     use forensic_vfs::adapters::FileSource;
     use forensic_vfs::{
-        Credential, CredentialSource, CryptoLayer, CryptoScheme, DynSource, VfsError,
+        Credential, CredentialSource, DynSource, EncryptionLayer, EncryptionScheme, VfsError,
     };
     use sha2::{Digest, Sha256};
     use std::sync::Arc;
 
     struct FixedCreds(Vec<Credential>);
     impl CredentialSource for FixedCreds {
-        fn credentials_for(&self, _scheme: CryptoScheme, _target: &str) -> Vec<Credential> {
+        fn credentials_for(&self, _scheme: EncryptionScheme, _target: &str) -> Vec<Credential> {
             self.0.clone()
         }
     }
@@ -157,7 +157,7 @@ mod tests {
             return; // cov:unreachable: CI provides the oracle (ci.yml fetches + carves it)
         };
         let layer = FileVaultLayer::new(enc);
-        assert_eq!(layer.scheme(), CryptoScheme::FileVault);
+        assert_eq!(layer.scheme(), EncryptionScheme::FileVault);
 
         let creds = FixedCreds(vec![Credential::Password("fvde-TEST".to_string())]);
         let dec: DynSource = layer.open(&creds).expect("unlock fvdetest");
@@ -196,7 +196,7 @@ mod tests {
     #[test]
     fn synthetic_open_decrypts_and_reads() {
         let layer = FileVaultLayer::new(synthetic_source());
-        assert_eq!(layer.scheme(), CryptoScheme::FileVault);
+        assert_eq!(layer.scheme(), EncryptionScheme::FileVault);
 
         let creds = FixedCreds(vec![Credential::Password(PASSWORD.to_string())]);
         let dec: DynSource = layer.open(&creds).expect("unlock synthetic");
