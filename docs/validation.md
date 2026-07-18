@@ -30,9 +30,9 @@ Offset 1024 decrypts to the HFS+ volume header (`482b0004…4846534a` = "H+" v4
 FVDE_ORACLE_IMAGE=/path/to/cs.raw cargo test -p filevault-core --test oracle_fvde
 ```
 
-## `vfs` CryptoLayer adapter (`core/src/vfs.rs`)
+## `vfs` EncryptionLayer adapter (`core/src/vfs.rs`)
 
-The optional `vfs` feature exposes a `forensic-vfs` `CryptoLayer`
+The optional `vfs` feature exposes a `forensic-vfs` `EncryptionLayer`
 (`FileVaultLayer`) that presents the decrypted logical volume as a `DynSource`.
 It is validated two ways:
 

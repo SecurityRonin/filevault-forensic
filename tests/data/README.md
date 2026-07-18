@@ -36,7 +36,7 @@ never under `~/src`.
 
 - Reader Tier-1: `cargo test -p filevault-core --test oracle_fvde`
 - Analyzer Tier-1: `cargo test -p filevault-forensic --test oracle`
-- `vfs` CryptoLayer adapter Tier-1 (needs `--all-features`):
+- `vfs` EncryptionLayer adapter Tier-1 (needs `--all-features`):
   `cargo test -p filevault-core --all-features --lib vfs`
 
 All skip cleanly when `FVDE_ORACLE_IMAGE` is unset.

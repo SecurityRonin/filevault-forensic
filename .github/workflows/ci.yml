@@ -62,7 +62,7 @@ jobs:
           dd if=fvdetest.raw of=cs.raw bs=512 skip=40 count=1048496
           echo "FVDE_ORACLE_IMAGE=$PWD/cs.raw" >> "$GITHUB_ENV"
       - name: Run the Tier-1 oracle tests
-        # --all-features so the `vfs` CryptoLayer adapter's real-decrypt test
+        # --all-features so the `vfs` EncryptionLayer adapter's real-decrypt test
         # (core/src/vfs.rs) runs against the oracle too, not just the readers.
         run: cargo test --workspace --all-features --test oracle_fvde --test oracle --lib
 
@@ -105,7 +105,7 @@ jobs:
       # a future change. Such lines cannot be exercised by any test and are
       # exempt. The gate fails on any OTHER zero-hit line.
       - name: Generate lcov
-        # --all-features so the `vfs` CryptoLayer adapter (core/src/vfs.rs) is
+        # --all-features so the `vfs` EncryptionLayer adapter (core/src/vfs.rs) is
         # compiled and measured; the oracle above lets its real-decrypt test run.
         run: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
       - name: Enforce line coverage (unreachable defensive arms must carry // cov:unreachable)
