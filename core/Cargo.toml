@@ -26,7 +26,7 @@ vfs = ["dep:forensic-vfs"]
 [dependencies]
 thiserror = { workspace = true }
 uuid = { workspace = true }
-forensic-vfs = { version = "0.3", optional = true }
+forensic-vfs = { version = "0.4.2", optional = true }
 # RustCrypto — never hand-roll a primitive (CLAUDE.core "never hand-roll crypto").
 pbkdf2 = { version = "0.12", default-features = false }
 hmac = "0.12"
