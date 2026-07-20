@@ -1,0 +1,65 @@
+
+# cargo-vet imports lock
+
+[[publisher.bumpalo]]
+version = "3.20.3"
+when = "2026-05-22"
+user-id = 696
+user-login = "fitzgen"
+user-name = "Nick Fitzgerald"
+
+[[audits.bytecode-alliance.wildcard-audits.bumpalo]]
+who = "Nick Fitzgerald <fitzgen@gmail.com>"
+criteria = "safe-to-deploy"
+user-id = 696 # Nick Fitzgerald (fitzgen)
+start = "2019-03-16"
+end = "2026-08-21"
+
+[[audits.bytecode-alliance.audits.cipher]]
+who = "Andrew Brown <andrew.brown@intel.com>"
+criteria = "safe-to-deploy"
+version = "0.4.4"
+notes = "Most unsafe is hidden by `inout` dependency; only remaining unsafe is raw-splitting a slice and an unreachable hint. Older versions of this regularly reach ~150k daily downloads."
+
+[audits.embark.audits]
+
+[[audits.google.audits.aes]]
+who = "Joshua Liebow-Feeser <joshlf@google.com>"
+criteria = "safe-to-deploy"
+delta = "0.7.5 -> 0.8.2"
+notes = """
+Note for reviewers of future updates to this crate: There exist
+internal APIs such as [1] which are safe but have undocumented safety
+invariants.
+
+[1] https://fuchsia-review.git.corp.google.com/c/fuchsia/+/711365/comment/7a8cdc16_9e9f45ca/
+"""
+aggregated-from = "https://fuchsia.googlesource.com/fuchsia/+/refs/heads/main/third_party/rust_crates/supply-chain/audits.toml?format=TEXT"
+
+[[audits.google.audits.aes]]
+who = "David Koloski <dkoloski@google.com>"
+criteria = "safe-to-deploy"
+delta = "0.8.2 -> 0.8.4"
+notes = "Audited at https://fxrev.dev/987054"
+aggregated-from = "https://fuchsia.googlesource.com/fuchsia/+/refs/heads/main/third_party/rust_crates/supply-chain/audits.toml?format=TEXT"
+
+[[audits.google.audits.base64]]
+who = "amarjotgill <amarjotgill@google.com>"
+criteria = "safe-to-deploy"
+version = "0.22.1"
+aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
+
+[[audits.google.audits.byteorder]]
+who = "danakj <danakj@chromium.org>"
+criteria = "safe-to-deploy"
+version = "1.5.0"
+notes = "Unsafe review in https://crrev.com/c/5838022"
+aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
+
+[[audits.google.audits.hmac]]
+who = "Joshua Liebow-Feeser <joshlf@google.com>"
+criteria = "safe-to-deploy"
+delta = "0.11.0 -> 0.12.1"
+aggregated-from = "https://fuchsia.googlesource.com/fuchsia/+/refs/heads/main/third_party/rust_crates/supply-chain/audits.toml?format=TEXT"
+
+[audits.mozilla.audits]
