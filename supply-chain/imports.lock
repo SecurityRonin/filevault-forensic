@@ -8,6 +8,13 @@ user-id = 696
 user-login = "fitzgen"
 user-name = "Nick Fitzgerald"
 
+[[publisher.state-history-forensic]]
+version = "0.1.1"
+when = "2026-08-05"
+user-id = 347968
+user-login = "h4x0r"
+user-name = "Albert Hui"
+
 [[audits.bytecode-alliance.wildcard-audits.bumpalo]]
 who = "Nick Fitzgerald <fitzgen@gmail.com>"
 criteria = "safe-to-deploy"

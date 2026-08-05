@@ -130,10 +130,6 @@ criteria = "safe-to-deploy"
 version = "0.4.12"
 criteria = "safe-to-deploy"
 
-[[exemptions.state-history-forensic]]
-version = "0.1.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.subtle]]
 version = "2.6.1"
 criteria = "safe-to-deploy"
