@@ -7,7 +7,7 @@
 criteria = "safe-to-deploy"
 user-id = 347968 # Albert Hui (h4x0r)
 start = "2026-03-05"
-end = "2027-08-07"
+end = "2027-08-08"
 
 [[trusted.forensic-vfs]]
 criteria = "safe-to-deploy"
@@ -25,7 +25,7 @@ end = "2027-08-07"
 criteria = "safe-to-deploy"
 user-id = 347968 # Albert Hui (h4x0r)
 start = "2026-06-05"
-end = "2027-08-05"
+end = "2027-08-07"
 
 [[trusted.forensicnomicon-core]]
 criteria = "safe-to-deploy"
@@ -38,6 +38,18 @@ criteria = "safe-to-deploy"
 user-id = 347968 # Albert Hui (h4x0r)
 start = "2026-06-28"
 end = "2027-08-07"
+
+[[trusted.jsonguard]]
+criteria = "safe-to-deploy"
+user-id = 347968 # Albert Hui (h4x0r)
+start = "2026-05-21"
+end = "2027-08-08"
+
+[[trusted.safe-decode]]
+criteria = "safe-to-deploy"
+user-id = 347968 # Albert Hui (h4x0r)
+start = "2026-08-02"
+end = "2027-08-08"
 
 [[trusted.safe-read]]
 criteria = "safe-to-deploy"
