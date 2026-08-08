@@ -56,6 +56,7 @@ jobs:
       # data in CI instead of skipping. See docs/validation.md.
       - name: Fetch + carve the dfvfs fvdetest oracle
         run: |
+          sudo apt-get update
           sudo apt-get update && sudo apt-get install -y qemu-utils
           curl -sL https://raw.githubusercontent.com/log2timeline/dfvfs/main/test_data/fvdetest.qcow2 -o fvdetest.qcow2
           qemu-img convert -O raw fvdetest.qcow2 fvdetest.raw
@@ -92,6 +93,7 @@ jobs:
       # synthetic tests already cover their lines; this adds real-data reach).
       - name: Fetch + carve the dfvfs fvdetest oracle
         run: |
+          sudo apt-get update
           sudo apt-get update && sudo apt-get install -y qemu-utils
           curl -sL https://raw.githubusercontent.com/log2timeline/dfvfs/main/test_data/fvdetest.qcow2 -o fvdetest.qcow2
           qemu-img convert -O raw fvdetest.qcow2 fvdetest.raw
