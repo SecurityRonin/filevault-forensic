@@ -36,6 +36,8 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@9bdad043e88c75890e36ad3bbc8d27f0090dd609 # v2.7.8
+        with:
+          cache-on-failure: true
       # Fetch the public Apache-2.0 dfvfs CoreStorage/FileVault2 image and carve
       # its CS partition (GPT LBA 40) so the Tier-1 test genuinely decrypts real
       # data in CI instead of skipping. See docs/validation.md.
@@ -60,6 +62,8 @@ jobs:
         with:
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@9bdad043e88c75890e36ad3bbc8d27f0090dd609 # v2.7.8
+        with:
+          cache-on-failure: true
       - uses: taiki-e/install-action@59012be0884e296ca2da49b530610e72c49039ad # v2.81.6
         with:
           tool: cargo-llvm-cov
