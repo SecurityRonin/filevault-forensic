@@ -1,5 +1,8 @@
 //! # filevault-forensic — CoreStorage / FileVault 2 anomaly auditor
 //!
+//! Public items here take or return `filevault` types (`FileVaultInfo` in `audit_info`, `FileVaultError` in `audit`/`audit_path`), so `filevault-core` is a
+//! public dependency: an incompatible `filevault-core` changes this crate's API as well.
+//!
 //! Audits a CoreStorage / FileVault volume WITHOUT the password, emitting
 //! severity-graded [`forensicnomicon::report::Finding`]s over the metadata
 //! parsed by [`filevault`]. Findings are OBSERVATIONS, never verdicts: a low
