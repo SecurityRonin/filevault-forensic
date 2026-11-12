@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0](https://github.com/SecurityRonin/filevault-forensic/compare/filevault-core-v0.1.5...filevault-core-v0.2.0) - 2026-11-12
+
+### Fixed
+
+- *(vfs)* [**breaking**] implement forensic-vfs 0.10, the trait the engine links against
+
 ## [0.1.5](https://github.com/SecurityRonin/filevault-forensic/compare/filevault-core-v0.1.4...filevault-core-v0.1.5) - 2026-07-20
 
 ### Fixed
