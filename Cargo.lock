@@ -97,7 +97,7 @@ dependencies = [
 
 [[package]]
 name = "filevault-core"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "aes",
  "aes-kw",
@@ -113,7 +113,7 @@ dependencies = [
 
 [[package]]
 name = "filevault-forensic"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "aes",
  "base64",

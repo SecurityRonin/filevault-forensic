@@ -7,7 +7,7 @@ members = ["core", "forensic"]
 # members inherit via `field.workspace = true`.
 # ---------------------------------------------------------------------------
 [workspace.package]
-version      = "0.1.5"
+version      = "0.2.0"
 edition      = "2021"
 rust-version = "1.81"
 license      = "Apache-2.0"
@@ -20,7 +20,7 @@ repository   = "https://github.com/SecurityRonin/filevault-forensic"
 [workspace.dependencies]
 thiserror = "2"
 uuid = "1"
-filevault = { version = "0.1", path = "core", package = "filevault-core" }
+filevault = { version = "0.2", path = "core", package = "filevault-core" }
 forensicnomicon = { version = "1", features = ["std"] }
 
 # ---------------------------------------------------------------------------
